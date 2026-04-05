@@ -1,0 +1,73 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 의존성 설치
+        run: |
+          pip install flask pyinstaller
+
+      - name: 빌드
+        run: |
+          pyinstaller build.spec
+
+      - name: 실행파일 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: TelloEDU-${{ runner.os }}
+          path: dist/TelloEDU*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Windows 빌드 다운로드
+        uses: actions/download-artifact@v4
+        with:
+          name: TelloEDU-Windows
+          path: windows
+
+      - name: macOS 빌드 다운로드
+        uses: actions/download-artifact@v4
+        with:
+          name: TelloEDU-macOS
+          path: macos
+
+      - name: Release 생성
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            windows/*
+            macos/*
+          body: |
+            ## Tello EDU 블록코딩
+
+            ### 다운로드
+            - **Windows**: `TelloEDU.exe` 다운로드 → 더블클릭 실행
+            - **macOS**: `TelloEDU` 다운로드 → 터미널에서 `chmod +x TelloEDU` 후 실행
+
+            ### 사용법
+            1. Tello EDU 전원 ON
+            2. PC에서 TELLO-XXXXXX WiFi 연결
+            3. 다운받은 파일 실행
+            4. 브라우저에서 블록코딩 시작!

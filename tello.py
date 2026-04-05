@@ -19,8 +19,9 @@ class Tello:
     TIMEOUT = 20
 
     def __init__(self):
-        # 명령 송수신용 단일 소켓 (OS가 포트 자동 할당)
+        # 명령 송수신용 소켓 (포트 8889 바인딩)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(('', self.COMMAND_PORT))
         self.sock.settimeout(self.TIMEOUT)
 
         # 드론 상태
@@ -53,14 +54,15 @@ class Tello:
         with self._lock:
             try:
                 # 수신 버퍼 비우기
-                self.sock.setblocking(False)
                 try:
+                    self.sock.setblocking(False)
                     while True:
                         self.sock.recvfrom(1024)
-                except BlockingIOError:
+                except (BlockingIOError, OSError):
                     pass
-                self.sock.setblocking(True)
-                self.sock.settimeout(self.TIMEOUT)
+                finally:
+                    self.sock.setblocking(True)
+                    self.sock.settimeout(self.TIMEOUT)
 
                 # 명령 전송
                 self._log(f'전송: {command}')

@@ -33,7 +33,12 @@ const toolbox = {
       name: '이동',
       categorystyle: 'move_category',
       contents: [
-        { kind: 'block', type: 'tello_move' }
+        { kind: 'block', type: 'tello_forward' },
+        { kind: 'block', type: 'tello_back' },
+        { kind: 'block', type: 'tello_left' },
+        { kind: 'block', type: 'tello_right' },
+        { kind: 'block', type: 'tello_up' },
+        { kind: 'block', type: 'tello_down' }
       ]
     },
     {
@@ -41,7 +46,8 @@ const toolbox = {
       name: '회전',
       categorystyle: 'rotate_category',
       contents: [
-        { kind: 'block', type: 'tello_rotate' }
+        { kind: 'block', type: 'tello_cw' },
+        { kind: 'block', type: 'tello_ccw' }
       ]
     },
     {
@@ -49,7 +55,10 @@ const toolbox = {
       name: '플립',
       categorystyle: 'flip_category',
       contents: [
-        { kind: 'block', type: 'tello_flip' }
+        { kind: 'block', type: 'tello_flip_f' },
+        { kind: 'block', type: 'tello_flip_b' },
+        { kind: 'block', type: 'tello_flip_l' },
+        { kind: 'block', type: 'tello_flip_r' }
       ]
     },
     {
@@ -176,6 +185,12 @@ function initBlockly() {
 
   // 워크스페이스 변경 시 코드 미리보기 업데이트
   workspace.addChangeListener(updateCodePreview);
+
+  // 시작 블록 자동 배치
+  const startBlock = workspace.newBlock('tello_start');
+  startBlock.initSvg();
+  startBlock.render();
+  startBlock.moveBy(50, 30);
 }
 
 /**
@@ -292,18 +307,19 @@ function updateConnectionUI(state) {
 async function runBlocks() {
   if (isRunning) return;
 
-  // 블록에서 명령어 생성
+  // 블록에서 명령어 생성 (연결된 블록만)
   const commands = getCommandsFromBlocks();
+  const topBlocks = workspace.getTopBlocks(true);
 
   if (commands.length === 0) {
-    addLog('⚠️ 실행할 블록이 없습니다.', 'warning');
+    addLog('"실행하기" 블록 아래에 명령 블록을 연결해주세요.', 'warning');
     return;
   }
 
   isRunning = true;
   document.getElementById('btnRun').disabled = true;
 
-  addLog('▶️ 실행 시작 (' + commands.length + '개 명령)', 'info');
+  addLog('실행 시작 (' + commands.length + '개 명령)', 'info');
   addLog('━━━━━━━━━━━━━━━━━━━━', 'info');
 
   // 명령 리스트를 표시
@@ -365,9 +381,14 @@ async function runBlocks() {
  * 블록 워크스페이스에서 명령 리스트 추출
  */
 function getCommandsFromBlocks() {
-  // Blockly 코드 생성기로 명령 문자열 생성
-  const code = javascript.javascriptGenerator.workspaceToCode(workspace);
-  // 줄 단위로 분리, 빈 줄 제거
+  // "실행하기" 시작 블록을 찾아서 그 체인만 실행
+  const allBlocks = workspace.getAllBlocks(false);
+  const startBlock = allBlocks.find(b => b.type === 'tello_start');
+
+  if (!startBlock) return [];
+
+  // 시작 블록에 연결된 체인의 코드만 생성
+  const code = javascript.javascriptGenerator.blockToCode(startBlock);
   return code.split('\n').filter(line => line.trim() !== '');
 }
 

@@ -6,6 +6,13 @@
 // JavaScript 코드 생성기 사용
 const telloGenerator = javascript.javascriptGenerator;
 
+// ===== 시작 블록 =====
+
+// 시작 블록은 코드를 생성하지 않음 (실행 기준점 역할만)
+telloGenerator.forBlock['tello_start'] = function(block) {
+  return '';
+};
+
 // ===== 기본 제어 =====
 
 // 이륙: "takeoff"
@@ -28,30 +35,58 @@ telloGenerator.forBlock['tello_stop'] = function(block) {
   return 'stop\n';
 };
 
-// ===== 이동 =====
+// ===== 이동 (방향별 6개) =====
 
-// 방향 이동: "up 50", "forward 100" 등
-telloGenerator.forBlock['tello_move'] = function(block) {
-  const direction = block.getFieldValue('DIRECTION');
-  const distance = block.getFieldValue('DISTANCE');
-  return direction + ' ' + distance + '\n';
+telloGenerator.forBlock['tello_forward'] = function(block) {
+  return 'forward ' + block.getFieldValue('DISTANCE') + '\n';
 };
 
-// ===== 회전 =====
-
-// 회전: "cw 90", "ccw 180" 등
-telloGenerator.forBlock['tello_rotate'] = function(block) {
-  const direction = block.getFieldValue('DIRECTION');
-  const angle = block.getFieldValue('ANGLE');
-  return direction + ' ' + angle + '\n';
+telloGenerator.forBlock['tello_back'] = function(block) {
+  return 'back ' + block.getFieldValue('DISTANCE') + '\n';
 };
 
-// ===== 플립 =====
+telloGenerator.forBlock['tello_left'] = function(block) {
+  return 'left ' + block.getFieldValue('DISTANCE') + '\n';
+};
 
-// 뒤집기: "flip l", "flip r" 등
-telloGenerator.forBlock['tello_flip'] = function(block) {
-  const direction = block.getFieldValue('DIRECTION');
-  return 'flip ' + direction + '\n';
+telloGenerator.forBlock['tello_right'] = function(block) {
+  return 'right ' + block.getFieldValue('DISTANCE') + '\n';
+};
+
+telloGenerator.forBlock['tello_up'] = function(block) {
+  return 'up ' + block.getFieldValue('DISTANCE') + '\n';
+};
+
+telloGenerator.forBlock['tello_down'] = function(block) {
+  return 'down ' + block.getFieldValue('DISTANCE') + '\n';
+};
+
+// ===== 회전 (방향별 2개) =====
+
+telloGenerator.forBlock['tello_cw'] = function(block) {
+  return 'cw ' + block.getFieldValue('ANGLE') + '\n';
+};
+
+telloGenerator.forBlock['tello_ccw'] = function(block) {
+  return 'ccw ' + block.getFieldValue('ANGLE') + '\n';
+};
+
+// ===== 플립 (방향별 4개) =====
+
+telloGenerator.forBlock['tello_flip_f'] = function(block) {
+  return 'flip f\n';
+};
+
+telloGenerator.forBlock['tello_flip_b'] = function(block) {
+  return 'flip b\n';
+};
+
+telloGenerator.forBlock['tello_flip_l'] = function(block) {
+  return 'flip l\n';
+};
+
+telloGenerator.forBlock['tello_flip_r'] = function(block) {
+  return 'flip r\n';
 };
 
 // ===== 속도 =====

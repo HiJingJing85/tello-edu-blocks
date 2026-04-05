@@ -5,6 +5,21 @@
  */
 
 // ===================================================================
+// 0. 시작 블록 (실행 기준점)
+// ===================================================================
+
+Blockly.Blocks['tello_start'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('실행하기');
+    this.setNextStatement(true, null);
+    this.setStyle('control_blocks');
+    this.setDeletable(false);
+    this.setTooltip('프로그램의 시작점입니다. 이 블록 아래에 명령 블록을 연결하세요.');
+  }
+};
+
+// ===================================================================
 // 1. 기본 제어 블록
 // ===================================================================
 
@@ -53,68 +68,162 @@ Blockly.Blocks['tello_stop'] = {
 };
 
 // ===================================================================
-// 2. 이동 블록
+// 2. 이동 블록 (방향별 6개)
 // ===================================================================
 
-Blockly.Blocks['tello_move'] = {
+Blockly.Blocks['tello_forward'] = {
   init: function() {
     this.appendDummyInput()
-        .appendField(new Blockly.FieldDropdown([
-          ['위로', 'up'],
-          ['아래로', 'down'],
-          ['왼쪽으로', 'left'],
-          ['오른쪽으로', 'right'],
-          ['앞으로', 'forward'],
-          ['뒤로', 'back']
-        ]), 'DIRECTION')
+        .appendField('▲ 앞으로')
         .appendField(new Blockly.FieldNumber(50, 20, 500, 1), 'DISTANCE')
-        .appendField('cm 이동하기');
+        .appendField('cm');
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setStyle('move_blocks');
-    this.setTooltip('지정한 방향으로 거리(20~500cm)만큼 이동합니다.');
+    this.setTooltip('앞으로 이동합니다 (20~500cm).');
+  }
+};
+
+Blockly.Blocks['tello_back'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('▼ 뒤로')
+        .appendField(new Blockly.FieldNumber(50, 20, 500, 1), 'DISTANCE')
+        .appendField('cm');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setStyle('move_blocks');
+    this.setTooltip('뒤로 이동합니다 (20~500cm).');
+  }
+};
+
+Blockly.Blocks['tello_left'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('◀ 왼쪽으로')
+        .appendField(new Blockly.FieldNumber(50, 20, 500, 1), 'DISTANCE')
+        .appendField('cm');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setStyle('move_blocks');
+    this.setTooltip('왼쪽으로 이동합니다 (20~500cm).');
+  }
+};
+
+Blockly.Blocks['tello_right'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('▶ 오른쪽으로')
+        .appendField(new Blockly.FieldNumber(50, 20, 500, 1), 'DISTANCE')
+        .appendField('cm');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setStyle('move_blocks');
+    this.setTooltip('오른쪽으로 이동합니다 (20~500cm).');
+  }
+};
+
+Blockly.Blocks['tello_up'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('⬆ 위로')
+        .appendField(new Blockly.FieldNumber(50, 20, 500, 1), 'DISTANCE')
+        .appendField('cm');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setStyle('move_blocks');
+    this.setTooltip('위로 이동합니다 (20~500cm).');
+  }
+};
+
+Blockly.Blocks['tello_down'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('⬇ 아래로')
+        .appendField(new Blockly.FieldNumber(50, 20, 500, 1), 'DISTANCE')
+        .appendField('cm');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setStyle('move_blocks');
+    this.setTooltip('아래로 이동합니다 (20~500cm).');
   }
 };
 
 // ===================================================================
-// 3. 회전 블록
+// 3. 회전 블록 (방향별 2개)
 // ===================================================================
 
-Blockly.Blocks['tello_rotate'] = {
+Blockly.Blocks['tello_cw'] = {
   init: function() {
     this.appendDummyInput()
-        .appendField(new Blockly.FieldDropdown([
-          ['시계 방향', 'cw'],
-          ['반시계 방향', 'ccw']
-        ]), 'DIRECTION')
-        .appendField('으로')
+        .appendField('↻ 시계 방향으로')
         .appendField(new Blockly.FieldNumber(90, 1, 360, 1), 'ANGLE')
-        .appendField('도 회전하기');
+        .appendField('도');
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setStyle('rotate_blocks');
-    this.setTooltip('지정한 방향으로 각도(1~360도)만큼 회전합니다.');
+    this.setTooltip('시계 방향(오른쪽)으로 회전합니다 (1~360도).');
+  }
+};
+
+Blockly.Blocks['tello_ccw'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('↺ 반시계 방향으로')
+        .appendField(new Blockly.FieldNumber(90, 1, 360, 1), 'ANGLE')
+        .appendField('도');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setStyle('rotate_blocks');
+    this.setTooltip('반시계 방향(왼쪽)으로 회전합니다 (1~360도).');
   }
 };
 
 // ===================================================================
-// 4. 플립 블록
+// 4. 플립 블록 (방향별 4개)
 // ===================================================================
 
-Blockly.Blocks['tello_flip'] = {
+Blockly.Blocks['tello_flip_f'] = {
   init: function() {
     this.appendDummyInput()
-        .appendField(new Blockly.FieldDropdown([
-          ['왼쪽', 'l'],
-          ['오른쪽', 'r'],
-          ['앞쪽', 'f'],
-          ['뒤쪽', 'b']
-        ]), 'DIRECTION')
-        .appendField('으로 뒤집기');
+        .appendField('▲ 앞으로 뒤집기');
     this.setPreviousStatement(true, null);
     this.setNextStatement(true, null);
     this.setStyle('flip_blocks');
-    this.setTooltip('지정한 방향으로 공중 뒤집기를 합니다.');
+    this.setTooltip('앞쪽으로 공중 뒤집기를 합니다.');
+  }
+};
+
+Blockly.Blocks['tello_flip_b'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('▼ 뒤로 뒤집기');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setStyle('flip_blocks');
+    this.setTooltip('뒤쪽으로 공중 뒤집기를 합니다.');
+  }
+};
+
+Blockly.Blocks['tello_flip_l'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('◀ 왼쪽으로 뒤집기');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setStyle('flip_blocks');
+    this.setTooltip('왼쪽으로 공중 뒤집기를 합니다.');
+  }
+};
+
+Blockly.Blocks['tello_flip_r'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField('▶ 오른쪽으로 뒤집기');
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setStyle('flip_blocks');
+    this.setTooltip('오른쪽으로 공중 뒤집기를 합니다.');
   }
 };
 

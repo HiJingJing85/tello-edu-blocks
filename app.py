@@ -124,8 +124,13 @@ def execute():
             'success': success
         })
 
-        # 명령 간 짧은 간격 (드론 안정성)
-        time.sleep(0.5)
+        # 이륙/착륙은 동작 완료까지 대기, 일반 명령은 짧게
+        if cmd == 'takeoff':
+            time.sleep(3)
+        elif cmd == 'land':
+            time.sleep(2)
+        else:
+            time.sleep(0.5)
 
         # 실패 시 중단
         if not success:

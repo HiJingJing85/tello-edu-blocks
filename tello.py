@@ -5,6 +5,7 @@ Tello EDU 드론 UDP 통신 모듈
 """
 
 import socket
+import sys
 import threading
 import time
 
@@ -12,57 +13,76 @@ import time
 class Tello:
     """Tello EDU 드론과 UDP 소켓으로 통신하는 클래스"""
 
-    # Tello 기본 네트워크 설정
     TELLO_IP = '192.168.10.1'
     COMMAND_PORT = 8889
     STATE_PORT = 8890
-    # 명령 응답 대기 타임아웃 (초)
-    TIMEOUT = 10
+    TIMEOUT = 20
 
     def __init__(self):
-        # 명령 송수신용 UDP 소켓
-        self.command_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.command_socket.settimeout(self.TIMEOUT)
-        self.command_socket.bind(('', self.COMMAND_PORT))
+        # 명령 송수신용 단일 소켓 (OS가 포트 자동 할당)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.settimeout(self.TIMEOUT)
 
-        # 드론 상태 정보 저장
+        # 드론 상태
         self.state = {}
-        # 연결 상태 플래그
         self.connected = False
-        # 상태 수신 스레드 실행 플래그
         self._state_running = False
         self._state_thread = None
+        self._lock = threading.Lock()
+
+        self._log('Tello 객체 생성됨')
+
+    def _log(self, msg):
+        """즉시 출력되는 로그"""
+        print(f'[TELLO] {msg}', flush=True)
 
     def connect(self):
-        """SDK 모드 진입 - 'command' 명령 전송"""
+        """SDK 모드 진입"""
+        self._log('SDK 모드 연결 시도...')
         response = self.send_command('command')
         if response == 'ok':
             self.connected = True
-            # 상태 수신 스레드 시작
             self._start_state_receiver()
+            self._log('연결 성공!')
+        else:
+            self._log(f'연결 실패: {response}')
         return response
 
     def send_command(self, command):
-        """
-        Tello에 명령을 전송하고 응답을 반환
-        - command: 전송할 SDK 명령 문자열
-        - 반환: 'ok', 'error', 또는 읽기 명령의 응답값
-        """
-        try:
-            self.command_socket.sendto(
-                command.encode('utf-8'),
-                (self.TELLO_IP, self.COMMAND_PORT)
-            )
-            # 응답 수신 대기
-            response, _ = self.command_socket.recvfrom(1024)
-            return response.decode('utf-8').strip()
-        except socket.timeout:
-            return 'error: timeout'
-        except OSError as e:
-            return f'error: {str(e)}'
+        """명령 전송 후 응답 대기"""
+        with self._lock:
+            try:
+                # 수신 버퍼 비우기
+                self.sock.setblocking(False)
+                try:
+                    while True:
+                        self.sock.recvfrom(1024)
+                except BlockingIOError:
+                    pass
+                self.sock.setblocking(True)
+                self.sock.settimeout(self.TIMEOUT)
+
+                # 명령 전송
+                self._log(f'전송: {command}')
+                self.sock.sendto(
+                    command.encode('utf-8'),
+                    (self.TELLO_IP, self.COMMAND_PORT)
+                )
+
+                # 응답 수신
+                response, addr = self.sock.recvfrom(1024)
+                result = response.decode('utf-8').strip()
+                self._log(f'응답: {result}')
+                return result
+
+            except socket.timeout:
+                self._log(f'타임아웃: {command}')
+                return 'error: timeout'
+            except OSError as e:
+                self._log(f'오류: {command} → {e}')
+                return f'error: {str(e)}'
 
     def _start_state_receiver(self):
-        """드론 상태 정보를 수신하는 백그라운드 스레드 시작"""
         if self._state_running:
             return
         self._state_running = True
@@ -72,10 +92,6 @@ class Tello:
         self._state_thread.start()
 
     def _receive_state(self):
-        """
-        포트 8890에서 드론 상태 데이터를 지속적으로 수신
-        상태 형식: "pitch:0;roll:0;yaw:0;vgx:0;..."
-        """
         state_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         state_socket.settimeout(3)
         state_socket.bind(('', self.STATE_PORT))
@@ -83,7 +99,6 @@ class Tello:
         while self._state_running:
             try:
                 data, _ = state_socket.recvfrom(1024)
-                # 상태 문자열 파싱 → 딕셔너리로 변환
                 state_str = data.decode('utf-8').strip()
                 self.state = self._parse_state(state_str)
             except socket.timeout:
@@ -94,10 +109,6 @@ class Tello:
         state_socket.close()
 
     def _parse_state(self, state_str):
-        """
-        상태 문자열을 딕셔너리로 파싱
-        예: "pitch:0;roll:0;yaw:0;" → {"pitch": "0", "roll": "0", "yaw": "0"}
-        """
         result = {}
         for item in state_str.split(';'):
             if ':' in item:
@@ -106,13 +117,12 @@ class Tello:
         return result
 
     def get_state(self):
-        """현재 드론 상태 딕셔너리 반환"""
         return self.state.copy()
 
     def close(self):
-        """소켓 및 스레드 정리"""
         self._state_running = False
         if self._state_thread:
             self._state_thread.join(timeout=3)
-        self.command_socket.close()
+        self.sock.close()
         self.connected = False
+        self._log('연결 종료')
